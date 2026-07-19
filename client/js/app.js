@@ -45,7 +45,7 @@ class QuizApp {
         const role = this.loginRoleInput.value;
 
         try {
-            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/auth/login', {
+            const response = await fetch('https://quizzy-evr5.onrender.com/api/v1/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password, role })
