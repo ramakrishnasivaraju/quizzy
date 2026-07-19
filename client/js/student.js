@@ -80,7 +80,7 @@ class StudentDashboard {
 
     async fetchAvailableQuizzes() {
         try {
-            const response = await fetch('http://localhost:5000/api/v1/quizzes', {
+            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/quizzes', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
             const data = await response.json();
@@ -115,7 +115,7 @@ class StudentDashboard {
     // NEW: Fetch and display the student's past grades
     async fetchMyResults() {
         try {
-            const response = await fetch('http://localhost:5000/api/v1/quizzes/my-results', {
+            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/quizzes/my-results', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
             const data = await response.json();
