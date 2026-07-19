@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .dashboard-layout {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            padding: 1rem;
+            gap: 1rem;
+        }
+        .sidebar {
+            width: 250px;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1rem;
+        }
+        .sidebar-menu {
+            list-style: none;
+            margin-top: 2rem;
+            width: 100%;
+        }
+        .sidebar-menu li {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .sidebar-menu li:hover, .sidebar-menu li.active {
+            background: var(--glass-border);
+        }
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .stat-card {
+            padding: 1.5rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .section-hidden { display: none; }
+        .section-active { display: block; animation: fadeIn 0.3s ease; }
+        
+        .take-quiz-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-weight: bold;
+            transition: opacity 0.3s;
+            width: 100%;
+        }
+        .take-quiz-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div class="dashboard-layout">
+        
+        <!-- Sidebar -->
+        <nav class="glass-card sidebar">
+            <h2><i class="fas fa-user-graduate"></i> Student</h2>
+            <ul class="sidebar-menu">
+                <li id="nav-dashboard" class="active"><i class="fas fa-home"></i> Home</li>
+                <li id="nav-quizzes"><i class="fas fa-file-alt"></i> Available Quizzes</li>
+                <li id="nav-results"><i class="fas fa-chart-bar"></i> My Results</li>
+                <li onclick="studentApp.logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="glass-card main-content">
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h1 id="pageTitle">Welcome, Student!</h1>
+                <button id="themeToggle" class="theme-btn" style="position: static;"><i class="fas fa-moon"></i></button>
+            </header>
+
+            <!-- Home Section -->
+            <div id="dashboardSection" class="section-active">
+                <div class="glass-card" style="padding: 2rem; text-align: center;">
+                    <h2>Ready to test your knowledge?</h2>
+                    <p style="margin-top: 1rem; opacity: 0.8;">Navigate to the Available Quizzes tab to see your pending assessments.</p>
+                </div>
+            </div>
+
+            <!-- Available Quizzes Section -->
+            <div id="quizzesSection" class="section-hidden">
+                <div id="availableQuizzesList" class="stats-grid">
+                    <!-- Javascript will inject the quiz cards here -->
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="section-hidden">
+                <div class="glass-card" style="padding: 2rem; text-align: center;">
+                    <h2>Your Past Performance</h2>
+                    <p style="margin-top: 1rem; opacity: 0.8;">You haven't completed any quizzes yet.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- This links to the student.js file you saved earlier! -->
+    <script src="../js/student.js"></script>
+</body>
+</html>

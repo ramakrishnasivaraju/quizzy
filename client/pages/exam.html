@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Room</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .exam-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 2.5rem;
+        }
+        .exam-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--glass-border);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        .question-block {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+        }
+        .question-text {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        .options-list {
+            list-style: none;
+            padding: 0;
+        }
+        .option-item {
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .option-item input[type="radio"] {
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+        .submit-exam-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <div class="glass-card exam-container">
+        <div class="exam-header">
+            <div>
+                <h1 id="examTitle">Loading Exam...</h1>
+                <p id="examSubject" style="opacity: 0.8; margin-top: 5px;">Please wait</p>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 1.5rem; font-weight: bold; color: var(--accent);">
+                    <i class="fas fa-stopwatch"></i> <span id="timeRemaining">--:--</span>
+                </div>
+            </div>
+        </div>
+
+        <form id="examForm">
+            <div id="questionsContainer">
+                <!-- Javascript will inject the test questions here -->
+            </div>
+            
+            <button type="submit" id="submitExamBtn" class="btn-primary submit-exam-btn hidden">Submit Final Answers</button>
+        </form>
+    </div>
+
+    <script src="../js/exam.js"></script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Quiz Management System</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="light-mode">
+    
+    <!-- Theme Toggle -->
+    <button id="themeToggle" class="theme-btn"><i class="fas fa-moon"></i></button>
+
+    <!-- Landing View -->
+    <main id="landingView" class="container glass-container view-active">
+        <h1 class="main-title">Select Your Portal</h1>
+        <div class="card-grid">
+            <div class="glass-card animated-card" onclick="app.showLogin('admin')">
+                <i class="fas fa-user-shield card-icon"></i>
+                <h2>Admin</h2>
+                <p>Manage subjects, create quizzes, and analyze performance.</p>
+            </div>
+            <div class="glass-card animated-card" onclick="app.showLogin('student')">
+                <i class="fas fa-user-graduate card-icon"></i>
+                <h2>Student</h2>
+                <p>Access your dashboard, take tests, and view results.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Login View (Hidden by default) -->
+    <main id="loginView" class="container glass-container view-hidden">
+        <button class="back-btn" onclick="app.showLanding()"><i class="fas fa-arrow-left"></i> Back</button>
+        <h2 id="loginTitle" class="main-title">Login</h2>
+        <form id="authForm" class="glass-form">
+            <input type="hidden" id="loginRole" value="">
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" placeholder="Email Address" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            <button type="submit" class="btn-primary">Authenticate</button>
+        </form>
+    </main>
+
+    <script src="./js/app.js"></script>
+</body>
+</html>
