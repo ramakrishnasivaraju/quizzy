@@ -22,6 +22,7 @@ class ExamRoom {
         this.questionsContainer = document.getElementById('questionsContainer');
         this.submitBtn = document.getElementById('submitExamBtn');
         this.examForm = document.getElementById('examForm');
+        this.timerInterval = null; 
 
         this.init();
     }
@@ -48,7 +49,30 @@ class ExamRoom {
     renderExam(quiz, questions) {
         this.examTitle.textContent = quiz.title;
         this.examSubject.textContent = quiz.subject_name;
-        this.timeRemaining.textContent = `${quiz.time_limit_minutes}:00`;
+
+        // --- NEW: FUNCTIONAL COUNTDOWN TIMER --- //
+        let timeInSeconds = quiz.time_limit_minutes * 60;
+        
+        const updateTimerDisplay = () => {
+            let minutes = Math.floor(timeInSeconds / 60);
+            let seconds = timeInSeconds % 60;
+            this.timeRemaining.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        };
+        
+        updateTimerDisplay(); // Set the clock immediately
+        
+        this.timerInterval = setInterval(() => {
+            timeInSeconds--;
+            updateTimerDisplay();
+            
+            if (timeInSeconds <= 0) {
+                clearInterval(this.timerInterval);
+                alert("Time is up! Your exam will now be submitted automatically.");
+                // Automatically click the submit button behind the scenes
+                this.examForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            }
+        }, 1000);
+        // --- END TIMER --- //
 
         if (questions.length === 0) {
             this.questionsContainer.innerHTML = '<p>No questions have been added to this exam yet.</p>';
@@ -84,21 +108,20 @@ class ExamRoom {
 
         this.submitBtn.classList.remove('hidden');
 
-        // NEW: Grading Engine Submission
         this.examForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // 1. Gather all the selected radio buttons
+            // Stop the timer clock once the student hits submit
+            if (this.timerInterval) clearInterval(this.timerInterval);
+            
             const formData = new FormData(this.examForm);
             const answers = {};
             
             for (let [key, value] of formData.entries()) {
-                // Remove the "q_" prefix to just get the raw question ID
                 const questionId = key.replace('q_', '');
                 answers[questionId] = value;
             }
 
-            // 2. Send to the backend
             try {
                 const response = await fetch(`https://quizzy-evr5.onrender.com/api/v1/quizzes/exam/${this.quizId}/submit`, {
                     method: 'POST',
@@ -112,10 +135,7 @@ class ExamRoom {
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Show a formatted alert with the grade
                     alert(`EXAM GRADED!\n\nScore: ${data.score} out of ${data.total}\nGrade: ${data.percentage}%\n\nResult: ${data.message}`);
-                    
-                    // Redirect back to the dashboard
                     window.location.href = 'student-dashboard.html';
                 } else {
                     alert('Error submitting exam: ' + data.message);
