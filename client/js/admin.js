@@ -104,7 +104,7 @@ class AdminDashboard {
 
     async fetchDashboardStats() {
         try {
-            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/quizzes/stats', {
+            const response = await fetch('https://quizzy-evr5.onrender.com/api/v1/quizzes/stats', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
             const data = await response.json();
@@ -118,7 +118,7 @@ class AdminDashboard {
 
     async fetchSubjects() {
         try {
-            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/subjects', {
+            const response = await fetch('https://quizzy-evr5.onrender.com/api/v1/subjects', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
             const data = await response.json();
@@ -145,7 +145,7 @@ class AdminDashboard {
 
     async fetchQuizzes() {
         try {
-            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/quizzes', {
+            const response = await fetch('https://quizzy-evr5.onrender.com/api/v1/quizzes', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
             const data = await response.json();
@@ -176,7 +176,7 @@ class AdminDashboard {
 
     async fetchStudents() {
         try {
-            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/users/students', {
+            const response = await fetch('https://quizzy-evr5.onrender.com/api/v1/users/students', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
             const data = await response.json();
@@ -213,7 +213,7 @@ class AdminDashboard {
     async deleteSubject(id) {
         if (!confirm('Are you sure you want to delete this subject?')) return;
         try {
-            const response = await fetch(`[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/subjects/${id}`, {
+            const response = await fetch(`https://quizzy-evr5.onrender.com/api/v1/subjects/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
@@ -225,7 +225,7 @@ class AdminDashboard {
     async deleteQuiz(id) {
         if (!confirm('Are you sure you want to delete this quiz?')) return;
         try {
-            const response = await fetch(`[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/quizzes/${id}`, {
+            const response = await fetch(`https://quizzy-evr5.onrender.com/api/v1/quizzes/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
@@ -236,7 +236,7 @@ class AdminDashboard {
     async deleteStudent(id) {
         if (!confirm('Are you sure you want to delete this student?')) return;
         try {
-            const response = await fetch(`[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/users/students/${id}`, {
+            const response = await fetch(`https://quizzy-evr5.onrender.com/api/v1/users/students/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
@@ -248,7 +248,7 @@ class AdminDashboard {
 
     async populateSubjectDropdown() {
         try {
-            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/subjects', { headers: { 'Authorization': `Bearer ${this.token}` } });
+            const response = await fetch('https://quizzy-evr5.onrender.com/api/v1/subjects', { headers: { 'Authorization': `Bearer ${this.token}` } });
             const data = await response.json();
             if (response.ok) {
                 this.quizSubjectSelect.innerHTML = '<option value="" disabled selected>-- Select a Subject --</option>';
@@ -259,7 +259,7 @@ class AdminDashboard {
 
     async populateQuizDropdown() {
         try {
-            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/quizzes', { headers: { 'Authorization': `Bearer ${this.token}` } });
+            const response = await fetch('https://quizzy-evr5.onrender.com/api/v1/quizzes', { headers: { 'Authorization': `Bearer ${this.token}` } });
             const data = await response.json();
             if (response.ok) {
                 this.questionQuizSelect.innerHTML = '<option value="" disabled selected>-- Select a Quiz --</option>';
@@ -274,7 +274,7 @@ class AdminDashboard {
         const description = document.getElementById('subjectDescription').value;
         const icon_class = document.getElementById('subjectIcon').value;
         try {
-            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/subjects', {
+            const response = await fetch('https://quizzy-evr5.onrender.com/api/v1/subjects', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` },
                 body: JSON.stringify({ name, description, icon_class })
@@ -291,7 +291,7 @@ class AdminDashboard {
         const time_limit_minutes = document.getElementById('quizTimeLimit').value;
         const passing_score = document.getElementById('quizPassingScore').value;
         try {
-            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/quizzes', {
+            const response = await fetch('https://quizzy-evr5.onrender.com/api/v1/quizzes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` },
                 body: JSON.stringify({ subject_id, title, time_limit_minutes, passing_score })
@@ -313,7 +313,7 @@ class AdminDashboard {
             correct_option: document.getElementById('correctOption').value
         };
         try {
-            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/questions', {
+            const response = await fetch('https://quizzy-evr5.onrender.com/api/v1/questions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` },
                 body: JSON.stringify(body)
@@ -332,7 +332,7 @@ class AdminDashboard {
         const password = document.getElementById('studentPassword').value;
 
         try {
-            const response = await fetch('[https://quizzy-evr5.onrender.com](https://quizzy-evr5.onrender.com)/api/v1/users/students', {
+            const response = await fetch('https://quizzy-evr5.onrender.com/api/v1/users/students', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` },
                 body: JSON.stringify({ name, email, password })
