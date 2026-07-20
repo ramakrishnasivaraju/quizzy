@@ -23,9 +23,9 @@ exports.createStudent = async (req, res) => {
 
 exports.getAllStudents = async (req, res) => {
     try {
-        // Fetching the password column as well so the Admin UI can display it
+        // FIXED: Using single quotes for 'student' so the database doesn't confuse it for a column
         const [students] = await db.execute(
-            'SELECT user_id, name, email, password, created_at FROM Users WHERE role = "student" ORDER BY created_at DESC'
+            `SELECT user_id, name, email, password, created_at FROM Users WHERE role = 'student' ORDER BY created_at DESC`
         );
         res.status(200).json({ success: true, students });
     } catch (error) {
@@ -36,7 +36,8 @@ exports.getAllStudents = async (req, res) => {
 
 exports.deleteStudent = async (req, res) => {
     try {
-        await db.execute('DELETE FROM Users WHERE user_id = ? AND role = "student"', [req.params.id]);
+        // FIXED: Using single quotes for 'student' here as well
+        await db.execute(`DELETE FROM Users WHERE user_id = ? AND role = 'student'`, [req.params.id]);
         res.status(200).json({ success: true, message: 'Student deleted.' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error deleting student.' });

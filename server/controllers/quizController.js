@@ -131,7 +131,8 @@ exports.getDashboardStats = async (req, res) => {
     try {
         const [subjects] = await db.execute('SELECT COUNT(*) as count FROM Subjects');
         const [quizzes] = await db.execute('SELECT COUNT(*) as count FROM Quizzes');
-        const [students] = await db.execute('SELECT COUNT(*) as count FROM Users WHERE role = "student"');
+        // FIXED: Using single quotes for 'student' so the database can read it
+        const [students] = await db.execute(`SELECT COUNT(*) as count FROM Users WHERE role = 'student'`);
 
         res.status(200).json({
             students: students[0].count,
