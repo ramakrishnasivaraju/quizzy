@@ -44,7 +44,7 @@ exports.getAllQuizzes = async (req, res) => {
 exports.submitExam = async (req, res) => {
     try {
         const quizId = req.params.quizId;
-        const studentAnswers = req.body.answers; // The frontend will send { question_id: 'A', question_id: 'C', etc. }
+        const studentAnswers = req.body.answers || {}; 
 
         // 1. Get the quiz passing score requirement
         const [quizzes] = await db.execute('SELECT passing_score FROM Quizzes WHERE quiz_id = ?', [quizId]);
@@ -56,6 +56,10 @@ exports.submitExam = async (req, res) => {
         
         let score = 0;
         const totalQuestions = correctAnswers.length;
+
+        if (totalQuestions === 0) {
+             return res.status(400).json({ success: false, message: 'This quiz has no questions to grade.' });
+        }
 
         // 3. Compare student answers to correct answers
         correctAnswers.forEach(dbQuestion => {
@@ -69,17 +73,30 @@ exports.submitExam = async (req, res) => {
         const studentPercentage = (score / totalQuestions) * 100;
         const passed = studentPercentage >= passingPercentage;
 
-        // 5. Save the result to the database
+        // 5. Create the Results table if it doesn't exist yet!
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS Results (
+                result_id INT AUTO_INCREMENT PRIMARY KEY,
+                student_id INT NOT NULL,
+                quiz_id INT NOT NULL,
+                score INT NOT NULL,
+                total_questions INT NOT NULL,
+                passed BOOLEAN NOT NULL,
+                completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // 6. Save the result to the database (adding student_id to prevent errors)
         await db.execute(
-            'INSERT INTO Results (quiz_id, score, total_questions, passed) VALUES (?, ?, ?, ?)',
-            [quizId, score, totalQuestions, passed]
+            'INSERT INTO Results (student_id, quiz_id, score, total_questions, passed) VALUES (?, ?, ?, ?, ?)',
+            [1, quizId, score, totalQuestions, passed]
         );
 
         res.status(200).json({
             success: true,
             score: score,
             total: totalQuestions,
-            percentage: studentPercentage,
+            percentage: studentPercentage.toFixed(1), 
             passed: passed,
             message: passed ? 'Congratulations, you passed!' : 'Keep practicing, you failed this time.'
         });
@@ -107,22 +124,6 @@ exports.getStudentResults = async (req, res) => {
     } catch (error) {
         console.error('Error fetching results:', error);
         res.status(500).json({ success: false, message: 'Server error while fetching results.' });
-    }
-};
-
-exports.getDashboardStats = async (req, res) => {
-    try {
-        const [subjects] = await db.execute('SELECT COUNT(*) as count FROM Subjects');
-        const [quizzes] = await db.execute('SELECT COUNT(*) as count FROM Quizzes');
-        const [students] = await db.execute('SELECT COUNT(*) as count FROM Users WHERE role = "student"');
-
-        res.status(200).json({
-            students: students[0].count,
-            subjects: subjects[0].count,
-            quizzes: quizzes[0].count
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching stats' });
     }
 };
 
