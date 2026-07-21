@@ -26,7 +26,6 @@ exports.createQuiz = async (req, res) => {
 
 exports.getAllQuizzes = async (req, res) => {
     try {
-        // We JOIN the Subjects table so we can grab the subject name and icon!
         const [quizzes] = await db.execute(`
             SELECT q.*, s.name AS subject_name, s.icon_class 
             FROM Quizzes q 
@@ -45,13 +44,16 @@ exports.submitExam = async (req, res) => {
     try {
         const quizId = req.params.quizId;
         const studentAnswers = req.body.answers || {}; 
+        
+        // FIXED: Securely get the actual logged-in student's ID from their token
+        const studentId = req.user.id || req.user.userId || req.user.user_id;
 
         // 1. Get the quiz passing score requirement
         const [quizzes] = await db.execute('SELECT passing_score FROM Quizzes WHERE quiz_id = ?', [quizId]);
         if (quizzes.length === 0) return res.status(404).json({ success: false, message: 'Quiz not found.' });
         const passingPercentage = quizzes[0].passing_score;
 
-        // 2. Fetch the correct answers from the database securely
+        // 2. Fetch the correct answers from the database
         const [correctAnswers] = await db.execute('SELECT question_id, correct_option FROM Questions WHERE quiz_id = ?', [quizId]);
         
         let score = 0;
@@ -73,7 +75,7 @@ exports.submitExam = async (req, res) => {
         const studentPercentage = (score / totalQuestions) * 100;
         const passed = studentPercentage >= passingPercentage;
 
-        // 5. Create the Results table if it doesn't exist yet!
+        // 5. Create the Results table if it doesn't exist
         await db.execute(`
             CREATE TABLE IF NOT EXISTS Results (
                 result_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -86,10 +88,10 @@ exports.submitExam = async (req, res) => {
             )
         `);
 
-        // 6. Save the result to the database (adding student_id to prevent errors)
+        // 6. FIXED: Save the result to the specific student's ID, not a hardcoded "1"
         await db.execute(
             'INSERT INTO Results (student_id, quiz_id, score, total_questions, passed) VALUES (?, ?, ?, ?, ?)',
-            [1, quizId, score, totalQuestions, passed]
+            [studentId, quizId, score, totalQuestions, passed]
         );
 
         res.status(200).json({
@@ -109,16 +111,19 @@ exports.submitExam = async (req, res) => {
 
 exports.getStudentResults = async (req, res) => {
     try {
-        // We are using student_id = 1 since we defaulted to that earlier
+        // FIXED: Securely get the actual logged-in student's ID from their token
+        const studentId = req.user.id || req.user.userId || req.user.user_id;
+
+        // FIXED: Only fetch results where the database student_id matches the logged-in studentId
         const [results] = await db.execute(`
             SELECT r.score, r.total_questions, r.passed, r.completed_at, 
                    q.title AS quiz_title, s.name AS subject_name, s.icon_class
             FROM Results r
             JOIN Quizzes q ON r.quiz_id = q.quiz_id
             JOIN Subjects s ON q.subject_id = s.subject_id
-            WHERE r.student_id = 1
+            WHERE r.student_id = ?
             ORDER BY r.completed_at DESC
-        `);
+        `, [studentId]);
 
         res.status(200).json({ success: true, results });
     } catch (error) {
@@ -131,7 +136,6 @@ exports.getDashboardStats = async (req, res) => {
     try {
         const [subjects] = await db.execute('SELECT COUNT(*) as count FROM Subjects');
         const [quizzes] = await db.execute('SELECT COUNT(*) as count FROM Quizzes');
-        // FIXED: Using single quotes for 'student' so the database can read it
         const [students] = await db.execute(`SELECT COUNT(*) as count FROM Users WHERE role = 'student'`);
 
         res.status(200).json({
