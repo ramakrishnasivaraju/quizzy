@@ -27,12 +27,12 @@ exports.createQuestion = async (req, res) => {
 
 exports.getAllQuestions = async (req, res) => {
     try {
-        // We JOIN the Quizzes table to get the title of the quiz this question belongs to
+        // FIXED: Changed 'q.created_at' to 'q.question_id' since we don't have a timestamp column here
         const [questions] = await db.execute(`
             SELECT q.*, qz.title AS quiz_title 
             FROM Questions q 
             JOIN Quizzes qz ON q.quiz_id = qz.quiz_id 
-            ORDER BY q.created_at DESC
+            ORDER BY q.question_id DESC
         `);
         
         res.status(200).json({ success: true, questions });
