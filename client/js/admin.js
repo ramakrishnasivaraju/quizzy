@@ -34,6 +34,17 @@ class AdminDashboard {
         this.quizzesList = document.getElementById('quizzesList');
         
         this.createQuestionForm = document.getElementById('createQuestionForm');
+        
+        // Safely get or create a container for the questions list so we don't need to edit HTML
+        this.questionsList = document.getElementById('questionsList');
+        if (!this.questionsList && this.questionsSection) {
+            this.questionsList = document.createElement('div');
+            this.questionsList.id = 'questionsList';
+            this.questionsList.className = 'grid-layout';
+            this.questionsList.style.marginTop = '2rem';
+            this.questionsSection.appendChild(this.questionsList);
+        }
+        
         this.questionQuizSelect = document.getElementById('questionQuizSelect');
         
         this.createStudentForm = document.getElementById('createStudentForm'); 
@@ -56,7 +67,7 @@ class AdminDashboard {
         if (this.navDashboard) this.navDashboard.addEventListener('click', () => this.switchTab('dashboard'));
         if (this.navSubjects) this.navSubjects.addEventListener('click', () => { this.switchTab('subjects'); this.fetchSubjects(); });
         if (this.navQuizzes) this.navQuizzes.addEventListener('click', () => { this.switchTab('quizzes'); this.populateSubjectDropdown(); this.fetchQuizzes(); });
-        if (this.navQuestions) this.navQuestions.addEventListener('click', () => { this.switchTab('questions'); this.populateQuizDropdown(); });
+        if (this.navQuestions) this.navQuestions.addEventListener('click', () => { this.switchTab('questions'); this.populateQuizDropdown(); this.fetchQuestions(); });
         if (this.navStudents) this.navStudents.addEventListener('click', () => { this.switchTab('students'); this.fetchStudents(); });
 
         if (this.createSubjectForm) this.createSubjectForm.addEventListener('submit', (e) => this.handleCreateSubject(e));
@@ -208,7 +219,43 @@ class AdminDashboard {
         } catch (error) { console.error(error); }
     }
 
-    // --- NEW DELETE METHODS --- //
+    // --- NEW FEATURE: FETCH QUESTIONS --- //
+    async fetchQuestions() {
+        try {
+            const response = await fetch('https://quizzy-evr5.onrender.com/api/v1/questions', {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+            const data = await response.json();
+            
+            if (response.ok && this.questionsList) {
+                this.questionsList.innerHTML = ''; 
+                if (data.questions.length === 0) return this.questionsList.innerHTML = '<p style="grid-column: 1 / -1;">No questions added yet.</p>';
+                
+                data.questions.forEach(q => {
+                    this.questionsList.innerHTML += `
+                        <div class="glass-card stat-card" style="text-align: left; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <h4 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--accent);">${q.quiz_title}</h4>
+                                <p style="font-size: 1.05rem; font-weight: bold; margin-bottom: 15px;">${q.question_text}</p>
+                                <ul style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 15px; padding-left: 20px; line-height: 1.5;">
+                                    <li>A: ${q.option_a}</li>
+                                    <li>B: ${q.option_b}</li>
+                                    <li>C: ${q.option_c}</li>
+                                    <li>D: ${q.option_d}</li>
+                                </ul>
+                                <p style="font-size: 0.9rem; color: #28a745; font-weight: bold;">Correct: ${q.correct_option}</p>
+                            </div>
+                            <button onclick="dashboardApp.deleteQuestion(${q.question_id})" style="background: #ff4d4d; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; margin-top: 15px; width: 100%;">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+        } catch (error) { console.error('Error fetching questions:', error); }
+    }
+
+    // --- DELETE METHODS --- //
 
     async deleteSubject(id) {
         if (!confirm('Are you sure you want to delete this subject?')) return;
@@ -241,6 +288,18 @@ class AdminDashboard {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
             if (response.ok) { this.fetchStudents(); this.fetchDashboardStats(); }
+        } catch (error) { console.error(error); }
+    }
+
+    async deleteQuestion(id) {
+        if (!confirm('Are you sure you want to delete this question?')) return;
+        try {
+            const response = await fetch(`https://quizzy-evr5.onrender.com/api/v1/questions/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+            if (response.ok) { this.fetchQuestions(); }
+            else { alert('Error deleting question.'); }
         } catch (error) { console.error(error); }
     }
 
@@ -321,6 +380,7 @@ class AdminDashboard {
             if (response.ok) { 
                 alert('Question successfully saved to quiz!');
                 this.createQuestionForm.reset(); 
+                this.fetchQuestions(); // Automatically refresh the list
             } else { alert('Error: ' + (await response.json()).message); }
         } catch (error) { alert('Failed to connect.'); }
     }

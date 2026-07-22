@@ -75,3 +75,14 @@ exports.getExamQuestions = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error while fetching exam.' });
     }
 };
+
+// --- NEW FEATURE: DELETE QUESTION ---
+exports.deleteQuestion = async (req, res) => {
+    try {
+        await db.execute('DELETE FROM Questions WHERE question_id = ?', [req.params.id]);
+        res.status(200).json({ success: true, message: 'Question deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting question:', error);
+        res.status(500).json({ success: false, message: 'Server error while deleting question.' });
+    }
+};

@@ -12,4 +12,8 @@ router.get('/', verifyToken, requireRole('admin'), questionController.getAllQues
 // GET: Students can fetch a specific exam (without the answers)
 router.get('/exam/:quizId', verifyToken, questionController.getExamQuestions);
 
+// --- NEW FEATURE: DELETE QUESTION ---
+// DELETE: Admins can delete a question
+router.delete('/:id', verifyToken, requireRole('admin'), questionController.deleteQuestion);
+
 module.exports = router;
