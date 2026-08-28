@@ -11,7 +11,7 @@ exports.createStudent = async (req, res) => {
     password = password.trim();
 
     try {
-        // Ensure the Users table has the correct structure safely
+        // Force clean setup to guarantee columns match the code
         await db.execute(`
             CREATE TABLE IF NOT EXISTS Users (
                 user_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -42,8 +42,20 @@ exports.createStudent = async (req, res) => {
 
 exports.getAllStudents = async (req, res) => {
     try {
+        // Fallback-safe check table creation
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS Users (
+                user_id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                role VARCHAR(50) DEFAULT 'student',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
         const [students] = await db.execute(
-            `SELECT user_id, name, email, password, created_at FROM Users WHERE role = 'student' ORDER BY user_id DESC`
+            `SELECT user_id, name, email, password FROM Users WHERE role = 'student' ORDER BY user_id DESC`
         );
         res.status(200).json({ success: true, students });
     } catch (error) {
