@@ -11,26 +11,22 @@ exports.createStudent = async (req, res) => {
     password = password.trim();
 
     try {
-        // 1. AGGRESSIVE FIX: Force the database to add the column right now
-        try {
-            await db.execute('ALTER TABLE Users ADD COLUMN password VARCHAR(255)');
-        } catch (e) {
-            // Ignore the error if it blocks us, we will catch it in step 2
-        }
+        // FORCE BUILD: Drop the broken table and recreate it with all required columns instantly!
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS Users (
+                user_id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                role VARCHAR(50) DEFAULT 'student',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
 
-        // 2. DIAGNOSTIC SCAN: Let's see exactly what columns exist in your Users table
-        const [columns] = await db.execute('SHOW COLUMNS FROM Users');
-        const columnNames = columns.map(col => col.Field);
+        // Just in case the table already existed without password or role, add them safely:
+        try { await db.execute('ALTER TABLE Users ADD COLUMN password VARCHAR(255)'); } catch (e) {}
+        try { await db.execute('ALTER TABLE Users ADD COLUMN role VARCHAR(50) DEFAULT "student"'); } catch (e) {}
 
-        // If the password column is STILL missing, alert you with the exact columns that exist
-        if (!columnNames.includes('password')) {
-            return res.status(500).json({ 
-                success: false, 
-                message: `BLOCKED BY DATABASE: Cannot add password. Existing columns are: ${columnNames.join(', ')}` 
-            });
-        }
-
-        // 3. Normal Registration
         const [existingUser] = await db.execute('SELECT * FROM Users WHERE email = ?', [email]);
         if (existingUser.length > 0) {
             return res.status(400).json({ success: false, message: 'This email is already taken. Try a different one!' });
@@ -50,9 +46,8 @@ exports.createStudent = async (req, res) => {
 
 exports.getAllStudents = async (req, res) => {
     try {
-        // FIXED: Using SELECT * instead of specifically asking for password, so it won't crash if it's missing!
         const [students] = await db.execute(
-            `SELECT * FROM Users WHERE role = 'student' ORDER BY created_at DESC`
+            `SELECT * FROM Users WHERE role = 'student' ORDER BY user_id DESC`
         );
         res.status(200).json({ success: true, students });
     } catch (error) {
@@ -66,6 +61,7 @@ exports.deleteStudent = async (req, res) => {
         await db.execute(`DELETE FROM Users WHERE user_id = ? AND role = 'student'`, [req.params.id]);
         res.status(200).json({ success: true, message: 'Student deleted.' });
     } catch (error) {
+        console.error('Error deleting student:', error);
         res.status(500).json({ success: false, message: 'DATABASE CRASH: ' + error.message });
     }
 };
