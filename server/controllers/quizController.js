@@ -30,7 +30,7 @@ exports.getAllQuizzes = async (req, res) => {
             SELECT q.*, s.name AS subject_name, s.icon_class 
             FROM Quizzes q 
             JOIN Subjects s ON q.subject_id = s.subject_id 
-            ORDER BY q.created_at DESC
+            ORDER BY q.quiz_id DESC
         `);
         
         res.status(200).json({ success: true, quizzes });
@@ -45,15 +45,12 @@ exports.submitExam = async (req, res) => {
         const quizId = req.params.quizId;
         const studentAnswers = req.body.answers || {}; 
         
-        // FIXED: Securely get the actual logged-in student's ID from their token
         const studentId = req.user.id || req.user.userId || req.user.user_id;
 
-        // 1. Get the quiz passing score requirement
         const [quizzes] = await db.execute('SELECT passing_score FROM Quizzes WHERE quiz_id = ?', [quizId]);
         if (quizzes.length === 0) return res.status(404).json({ success: false, message: 'Quiz not found.' });
         const passingPercentage = quizzes[0].passing_score;
 
-        // 2. Fetch the correct answers from the database
         const [correctAnswers] = await db.execute('SELECT question_id, correct_option FROM Questions WHERE quiz_id = ?', [quizId]);
         
         let score = 0;
@@ -63,7 +60,6 @@ exports.submitExam = async (req, res) => {
              return res.status(400).json({ success: false, message: 'This quiz has no questions to grade.' });
         }
 
-        // 3. Compare student answers to correct answers
         correctAnswers.forEach(dbQuestion => {
             const studentChoice = studentAnswers[dbQuestion.question_id];
             if (studentChoice === dbQuestion.correct_option) {
@@ -71,11 +67,9 @@ exports.submitExam = async (req, res) => {
             }
         });
 
-        // 4. Calculate if they passed
         const studentPercentage = (score / totalQuestions) * 100;
         const passed = studentPercentage >= passingPercentage;
 
-        // 5. Create the Results table if it doesn't exist
         await db.execute(`
             CREATE TABLE IF NOT EXISTS Results (
                 result_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -88,7 +82,6 @@ exports.submitExam = async (req, res) => {
             )
         `);
 
-        // 6. FIXED: Save the result to the specific student's ID, not a hardcoded "1"
         await db.execute(
             'INSERT INTO Results (student_id, quiz_id, score, total_questions, passed) VALUES (?, ?, ?, ?, ?)',
             [studentId, quizId, score, totalQuestions, passed]
@@ -111,10 +104,8 @@ exports.submitExam = async (req, res) => {
 
 exports.getStudentResults = async (req, res) => {
     try {
-        // FIXED: Securely get the actual logged-in student's ID from their token
         const studentId = req.user.id || req.user.userId || req.user.user_id;
 
-        // FIXED: Only fetch results where the database student_id matches the logged-in studentId
         const [results] = await db.execute(`
             SELECT r.score, r.total_questions, r.passed, r.completed_at, 
                    q.title AS quiz_title, s.name AS subject_name, s.icon_class
@@ -122,7 +113,7 @@ exports.getStudentResults = async (req, res) => {
             JOIN Quizzes q ON r.quiz_id = q.quiz_id
             JOIN Subjects s ON q.subject_id = s.subject_id
             WHERE r.student_id = ?
-            ORDER BY r.completed_at DESC
+            ORDER BY r.result_id DESC
         `, [studentId]);
 
         res.status(200).json({ success: true, results });
@@ -136,15 +127,22 @@ exports.getDashboardStats = async (req, res) => {
     try {
         const [subjects] = await db.execute('SELECT COUNT(*) as count FROM Subjects');
         const [quizzes] = await db.execute('SELECT COUNT(*) as count FROM Quizzes');
-        const [students] = await db.execute(`SELECT COUNT(*) as count FROM Users WHERE role = 'student'`);
+        
+        let studentCount = 0;
+        try {
+            const [students] = await db.execute(`SELECT COUNT(*) as count FROM Users WHERE role = 'student'`);
+            studentCount = students[0].count;
+        } catch (e) {
+            studentCount = 0;
+        }
 
         res.status(200).json({
-            students: students[0].count,
+            students: studentCount,
             subjects: subjects[0].count,
             quizzes: quizzes[0].count
         });
     } catch (error) {
-        console.error(error);
+        console.error('Dashboard stats error:', error);
         res.status(500).json({ message: 'Error fetching stats' });
     }
 };
