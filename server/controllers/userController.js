@@ -1,17 +1,5 @@
 const db = require('../config/db');
 
-// --- NEW: SELF-HEALING DATABASE SCRIPT ---
-// This will silently add the missing 'password' column to your database on the fly!
-const fixDatabase = async () => {
-    try {
-        await db.execute('ALTER TABLE Users ADD COLUMN password VARCHAR(255) DEFAULT "student123"');
-        console.log('Successfully fixed database: Added missing password column.');
-    } catch (error) {
-        // If the column already exists, it will just quietly ignore this step
-    }
-};
-fixDatabase(); // Run the fix immediately when the server starts
-
 exports.createStudent = async (req, res) => {
     let { name, email, password } = req.body;
 
@@ -23,6 +11,26 @@ exports.createStudent = async (req, res) => {
     password = password.trim();
 
     try {
+        // 1. AGGRESSIVE FIX: Force the database to add the column right now
+        try {
+            await db.execute('ALTER TABLE Users ADD COLUMN password VARCHAR(255)');
+        } catch (e) {
+            // Ignore the error if it blocks us, we will catch it in step 2
+        }
+
+        // 2. DIAGNOSTIC SCAN: Let's see exactly what columns exist in your Users table
+        const [columns] = await db.execute('SHOW COLUMNS FROM Users');
+        const columnNames = columns.map(col => col.Field);
+
+        // If the password column is STILL missing, alert you with the exact columns that exist
+        if (!columnNames.includes('password')) {
+            return res.status(500).json({ 
+                success: false, 
+                message: `BLOCKED BY DATABASE: Cannot add password. Existing columns are: ${columnNames.join(', ')}` 
+            });
+        }
+
+        // 3. Normal Registration
         const [existingUser] = await db.execute('SELECT * FROM Users WHERE email = ?', [email]);
         if (existingUser.length > 0) {
             return res.status(400).json({ success: false, message: 'This email is already taken. Try a different one!' });
@@ -42,8 +50,9 @@ exports.createStudent = async (req, res) => {
 
 exports.getAllStudents = async (req, res) => {
     try {
+        // FIXED: Using SELECT * instead of specifically asking for password, so it won't crash if it's missing!
         const [students] = await db.execute(
-            `SELECT user_id, name, email, password, created_at FROM Users WHERE role = 'student' ORDER BY created_at DESC`
+            `SELECT * FROM Users WHERE role = 'student' ORDER BY created_at DESC`
         );
         res.status(200).json({ success: true, students });
     } catch (error) {
