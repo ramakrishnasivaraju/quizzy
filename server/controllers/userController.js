@@ -1,14 +1,23 @@
 const db = require('../config/db');
 
 exports.createStudent = async (req, res) => {
-    const { name, email, password } = req.body;
+    let { name, email, password } = req.body;
 
     if (!name || !email || !password) {
         return res.status(400).json({ success: false, message: 'All fields are required.' });
     }
 
+    // CLEANUP: Automatically fix invisible spaces and capitalization before saving
+    email = email.trim().toLowerCase();
+    password = password.trim();
+
     try {
-        // Saving the password in standard text for the project demonstration
+        // Explicitly check if the email is already taken
+        const [existingUser] = await db.execute('SELECT * FROM Users WHERE email = ?', [email]);
+        if (existingUser.length > 0) {
+            return res.status(400).json({ success: false, message: 'This email is already taken. Try a different one!' });
+        }
+
         const [result] = await db.execute(
             'INSERT INTO Users (name, email, password, role) VALUES (?, ?, ?, ?)',
             [name, email, password, 'student']
@@ -17,13 +26,12 @@ exports.createStudent = async (req, res) => {
         res.status(201).json({ success: true, message: 'Student registered successfully!' });
     } catch (error) {
         console.error('Error adding student:', error);
-        res.status(500).json({ success: false, message: 'Server error or email already exists.' });
+        res.status(500).json({ success: false, message: 'Server error while creating student.' });
     }
 };
 
 exports.getAllStudents = async (req, res) => {
     try {
-        // FIXED: Using single quotes for 'student' so the database doesn't confuse it for a column
         const [students] = await db.execute(
             `SELECT user_id, name, email, password, created_at FROM Users WHERE role = 'student' ORDER BY created_at DESC`
         );
@@ -36,7 +44,6 @@ exports.getAllStudents = async (req, res) => {
 
 exports.deleteStudent = async (req, res) => {
     try {
-        // FIXED: Using single quotes for 'student' here as well
         await db.execute(`DELETE FROM Users WHERE user_id = ? AND role = 'student'`, [req.params.id]);
         res.status(200).json({ success: true, message: 'Student deleted.' });
     } catch (error) {
