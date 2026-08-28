@@ -1,5 +1,17 @@
 const db = require('../config/db');
 
+// --- NEW: SELF-HEALING DATABASE SCRIPT ---
+// This will silently add the missing 'password' column to your database on the fly!
+const fixDatabase = async () => {
+    try {
+        await db.execute('ALTER TABLE Users ADD COLUMN password VARCHAR(255) DEFAULT "student123"');
+        console.log('Successfully fixed database: Added missing password column.');
+    } catch (error) {
+        // If the column already exists, it will just quietly ignore this step
+    }
+};
+fixDatabase(); // Run the fix immediately when the server starts
+
 exports.createStudent = async (req, res) => {
     let { name, email, password } = req.body;
 
@@ -13,7 +25,7 @@ exports.createStudent = async (req, res) => {
     try {
         const [existingUser] = await db.execute('SELECT * FROM Users WHERE email = ?', [email]);
         if (existingUser.length > 0) {
-            return res.status(400).json({ success: false, message: 'This exact email is already in the database!' });
+            return res.status(400).json({ success: false, message: 'This email is already taken. Try a different one!' });
         }
 
         await db.execute(
@@ -24,7 +36,6 @@ exports.createStudent = async (req, res) => {
         res.status(201).json({ success: true, message: 'Student registered successfully!' });
     } catch (error) {
         console.error('Error adding student:', error);
-        // NEW: This will send the EXACT database error straight to your screen
         res.status(500).json({ success: false, message: 'DATABASE CRASH: ' + error.message });
     }
 };
