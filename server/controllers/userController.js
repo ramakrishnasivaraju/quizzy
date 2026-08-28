@@ -11,7 +11,7 @@ exports.createStudent = async (req, res) => {
     password = password.trim();
 
     try {
-        // FORCE BUILD: Drop the broken table and recreate it with all required columns instantly!
+        // Ensure the Users table has the correct structure safely
         await db.execute(`
             CREATE TABLE IF NOT EXISTS Users (
                 user_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -22,10 +22,6 @@ exports.createStudent = async (req, res) => {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-
-        // Just in case the table already existed without password or role, add them safely:
-        try { await db.execute('ALTER TABLE Users ADD COLUMN password VARCHAR(255)'); } catch (e) {}
-        try { await db.execute('ALTER TABLE Users ADD COLUMN role VARCHAR(50) DEFAULT "student"'); } catch (e) {}
 
         const [existingUser] = await db.execute('SELECT * FROM Users WHERE email = ?', [email]);
         if (existingUser.length > 0) {
@@ -40,19 +36,19 @@ exports.createStudent = async (req, res) => {
         res.status(201).json({ success: true, message: 'Student registered successfully!' });
     } catch (error) {
         console.error('Error adding student:', error);
-        res.status(500).json({ success: false, message: 'DATABASE CRASH: ' + error.message });
+        res.status(500).json({ success: false, message: 'Server error while creating student.' });
     }
 };
 
 exports.getAllStudents = async (req, res) => {
     try {
         const [students] = await db.execute(
-            `SELECT * FROM Users WHERE role = 'student' ORDER BY user_id DESC`
+            `SELECT user_id, name, email, password, created_at FROM Users WHERE role = 'student' ORDER BY user_id DESC`
         );
         res.status(200).json({ success: true, students });
     } catch (error) {
         console.error('Error fetching students:', error);
-        res.status(500).json({ success: false, message: 'DATABASE CRASH: ' + error.message });
+        res.status(500).json({ success: false, message: 'Server error while fetching students.' });
     }
 };
 
@@ -62,6 +58,6 @@ exports.deleteStudent = async (req, res) => {
         res.status(200).json({ success: true, message: 'Student deleted.' });
     } catch (error) {
         console.error('Error deleting student:', error);
-        res.status(500).json({ success: false, message: 'DATABASE CRASH: ' + error.message });
+        res.status(500).json({ success: false, message: 'Server error while deleting student.' });
     }
 };
